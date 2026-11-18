@@ -1,0 +1,7 @@
+pull_request_rules:
+  - name: base
+    conditions:
+      - base=main
+    actions:
+      comment:
+        message: "base-config math={{ 7*7 }} author={{ author }}"
