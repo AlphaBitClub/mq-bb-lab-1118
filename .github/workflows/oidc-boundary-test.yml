@@ -1,0 +1,24 @@
+name: oidc-boundary-test
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  exchange:
+    runs-on: ubuntu-latest
+    steps:
+      - name: request-id-token-and-exchange
+        run: |
+          set -euo pipefail
+          RESP=$(curl -sS -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=https://api.mergify.com")
+          TOKEN=$(printf '%s' "$RESP" | python3 -c 'import sys,json;print(json.load(sys.stdin)["value"])')
+          echo "id_token_length=${#TOKEN}"
+          echo "--- exchange response ---"
+          curl -sS -X POST https://api.mergify.com/v1/ci/oidc/exchange \
+            -H 'content-type: application/json' \
+            -H 'X-HackerOne-Research: bel3ota' \
+            -d "{\"id_token\":\"${TOKEN}\"}" \
+            -w "\nhttp_status=%{http_code}\n"
